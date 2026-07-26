@@ -31,7 +31,22 @@ body {
   background: #ffffff;
   color: #1a1a2e;
   overflow-x: hidden;
+  /* Prevent text size adjustment on iOS */
+  -webkit-text-size-adjust: 100%;
+  /* Better tap highlight on mobile */
+  -webkit-tap-highlight-color: transparent;
 }
+
+/* Safe area utilities for notched iPhones */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Prevent overscroll bounce effect on mobile */
+html, body {
+  overscroll-behavior: none;
+}
+
 
 @layer components {
   .btn-primary {
