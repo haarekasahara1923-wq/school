@@ -2,18 +2,9 @@ import { auth } from '@/lib/auth-edge';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Role-based route access
+// Role-based route access — only active sections
 const ROLE_ROUTES: Record<string, string[]> = {
-  '/admin/students': ['admin', 'accountant', 'operations'],
-  '/admin/fees': ['admin', 'accountant'],
-  '/admin/staff': ['admin', 'accountant', 'operations'],
-  '/admin/payroll': ['admin', 'accountant'],
-  '/admin/gallery': ['admin', 'operations'],
-  '/admin/inventory': ['admin', 'operations', 'inventory'],
-  '/admin/admissions': ['admin', 'operations'],
-  '/admin/contact': ['admin', 'operations'],
-  '/admin/certifications': ['admin', 'operations'],
-  '/admin/about': ['admin', 'operations'],
+  '/admin/gallery': ['admin'],
   '/admin/settings': ['admin'],
 };
 
