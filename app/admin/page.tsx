@@ -45,7 +45,7 @@ export default async function AdminDashboard() {
       <div className="bg-gradient-to-r from-[#0A1F44] to-[#1a3a6b] rounded-3xl p-8 text-white shadow-xl flex flex-col sm:flex-row items-center justify-between gap-6">
         <div>
           <h1 className="font-playfair text-3xl font-bold">Welcome back, {session?.user?.name || 'Admin'}! 👋</h1>
-          <p className="text-white/70 mt-1">Here is what is happening at K.L. International School today.</p>
+          <p className="text-white/70 mt-1">Here is what is happening at Progressive Smart Kids School today.</p>
         </div>
         <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/20 text-sm">
           Role: <span className="text-[#FF7A00] font-semibold capitalize">{(session?.user as any)?.role || 'Admin'}</span>

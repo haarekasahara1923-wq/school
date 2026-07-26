@@ -100,7 +100,7 @@ function LoginForm() {
       </form>
 
       <p className="text-white/40 text-xs text-center mt-6">
-        K.L. International School — Admin Portal
+        Progressive Smart Kids School — Admin Portal
       </p>
     </div>
   );
@@ -120,7 +120,7 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-[#FF7A00] to-[#E06500] shadow-2xl shadow-orange-500/40 mb-4">
             <GraduationCap className="w-10 h-10 text-white" />
           </div>
-          <h1 className="font-playfair text-3xl font-bold text-white">K.L. International</h1>
+          <h1 className="font-playfair text-2xl font-bold text-white">Progressive Smart Kids</h1>
           <p className="text-orange-300 text-sm mt-1">Admin Portal</p>
         </div>
 

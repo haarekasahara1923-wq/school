@@ -36,13 +36,13 @@ async function seed() {
   const passwordHash = await bcrypt.hash('Admin@123', 10);
   await db.insert(schema.users).values({
     name: 'Super Admin',
-    email: 'admin@progressivesmartkids.in',
+    email: 'admin@psks.space',
     username: 'admin',
     passwordHash,
     role: 'admin',
   }).onConflictDoUpdate({
     target: schema.users.username,
-    set: { email: 'admin@progressivesmartkids.in', passwordHash, role: 'admin', isActive: true },
+    set: { email: 'admin@psks.space', passwordHash, role: 'admin', isActive: true },
   });
 
   // Accountant

@@ -40,7 +40,7 @@ export default function Sidebar() {
             <GraduationCap className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="font-playfair font-bold text-white text-sm">KL International</h1>
+            <h1 className="font-playfair font-bold text-white text-sm">Progressive Smart Kids</h1>
             <p className="text-orange-300 text-xs capitalize">{userRole} Portal</p>
           </div>
         </div>
