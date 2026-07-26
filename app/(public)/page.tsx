@@ -34,14 +34,14 @@ const facilitiesList = [
   { icon: Sparkles, name: 'Co-Curriculars', color: 'bg-indigo-50 text-indigo-600' },
 ];
 
-const newsItems = [
-  '🎓 Admissions Open for Session 2025-26 (Nursery to Class XII)',
-  '🏆 Students Secur Top Positions in CBSE Board Examination',
-  '⚽ Annual Sports Meet & Cultural Fest Announcement',
-  '🔬 New Advanced Robotics & Computer Lab Inaugurated',
-];
+function NewsTicker({ session }: { session: string }) {
+  const newsItems = [
+    `🎓 Admissions Open for Session ${session} (Nursery to Class XII)`,
+    '🏆 Students Secur Top Positions in CBSE Board Examination',
+    '⚽ Annual Sports Meet & Cultural Fest Announcement',
+    '🔬 New Advanced Robotics & Computer Lab Inaugurated',
+  ];
 
-function NewsTicker() {
   return (
     <div className="bg-[#FF7A00] text-white py-2.5 overflow-hidden shadow-sm">
       <div className="flex items-center gap-4 px-4 max-w-7xl mx-auto">
@@ -70,14 +70,18 @@ export default function HomePage() {
   const y = useTransform(scrollYProgress, [0, 1], ['0%', '25%']);
 
   const [whatsapp, setWhatsapp] = useState('918962678915');
+  const [academicYear, setAcademicYear] = useState('2025-26');
 
   useEffect(() => {
-    fetch('/api/settings')
+    fetch('/api/settings', { cache: 'no-store' })
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
         if (Array.isArray(data)) {
           const wa = data.find((s: any) => s.key === 'whatsapp_number');
           if (wa?.value) setWhatsapp(wa.value);
+          
+          const session = data.find((s: any) => s.key === 'academic_year');
+          if (session?.value) setAcademicYear(session.value);
         }
       })
       .catch(() => {});
@@ -86,7 +90,7 @@ export default function HomePage() {
   return (
     <>
       <div className="mt-16 lg:mt-20">
-        <NewsTicker />
+        <NewsTicker session={academicYear} />
       </div>
 
       {/* Hero Section */}
@@ -112,7 +116,7 @@ export default function HomePage() {
             className="lg:col-span-7"
           >
             <span className="inline-block bg-[#FF7A00]/20 border border-[#FF7A00]/40 text-[#FF9A3C] text-sm font-semibold px-4 py-2 rounded-full mb-6">
-              ✨ Admissions Open 2025-26 (Class 1st to 12th)
+              ✨ Admissions Open {academicYear} (Class 1st to 12th)
             </span>
             <h1 className="font-playfair text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
               Welcome to <br />
@@ -272,7 +276,7 @@ export default function HomePage() {
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#FF7A00] to-[#E06500] p-10 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-8 shadow-2xl">
             <div className="relative z-10">
               <h2 className="font-playfair text-3xl lg:text-4xl font-bold text-white mb-3">
-                Admissions Open for Session 2025-26
+                Admissions Open for Session {academicYear}
               </h2>
               <p className="text-white/90 text-lg max-w-xl">
                 Classes 1st to 12th. Give your child the best foundation for future success at Progressive Smart Kids School.
