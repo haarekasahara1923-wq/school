@@ -6,6 +6,8 @@ import { auth } from '@/lib/auth';
 
 // Force dynamic rendering — prevents Vercel from caching this route
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
 
 export async function GET() {
   try {

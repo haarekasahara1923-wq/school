@@ -5,6 +5,8 @@ import { eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
 
 export async function GET() {
   try {
