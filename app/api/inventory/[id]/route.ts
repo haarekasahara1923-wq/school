@@ -4,6 +4,8 @@ import { inventory } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const session = await auth();
   if (!session || !['admin', 'operations', 'inventory'].includes((session.user as any).role)) {

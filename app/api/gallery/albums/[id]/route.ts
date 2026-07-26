@@ -4,6 +4,8 @@ import { galleryAlbums } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const session = await auth();
   if (!session || !['admin', 'operations'].includes((session.user as any).role)) {
@@ -36,7 +38,6 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
   }
 
   try {
-    // gallery_items will cascade delete due to FK onDelete: 'cascade'
     await db.delete(galleryAlbums).where(eq(galleryAlbums.id, params.id));
     return NextResponse.json({ success: true });
   } catch (error: any) {

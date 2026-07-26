@@ -4,10 +4,14 @@ import { aboutContent } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const content = await db.select().from(aboutContent);
-    return NextResponse.json(content);
+    return NextResponse.json(content, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+    });
   } catch (error: any) {
     console.error('[About GET]', error);
     return NextResponse.json({ error: 'Failed to fetch about content' }, { status: 500 });
@@ -32,7 +36,6 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: 'Invalid section. Must be director or principal.' }, { status: 400 });
     }
 
-    // Build set object — only include photo fields if they were explicitly provided
     const setData: Record<string, any> = {
       name,
       designation,
@@ -43,7 +46,6 @@ export async function PUT(req: Request) {
     if (photoUrl !== undefined) setData.photoUrl = photoUrl;
     if (photoPublicId !== undefined) setData.photoPublicId = photoPublicId;
 
-    // Check if a record already exists for this section
     const existing = await db
       .select({ id: aboutContent.id })
       .from(aboutContent)

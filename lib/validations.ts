@@ -11,6 +11,7 @@ export const contactEnquirySchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(255),
   email: z.string().email('Invalid email').optional().or(z.literal('')),
   phone: z.string().min(10, 'Phone must be at least 10 digits').max(20),
+  address: z.string().max(500).optional(),
   subject: z.string().max(255).optional(),
   message: z.string().min(10, 'Message must be at least 10 characters').max(2000),
 });

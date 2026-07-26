@@ -174,6 +174,7 @@ export const contactEnquiries = pgTable('contact_enquiries', {
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }),
   phone: varchar('phone', { length: 20 }).notNull(),
+  address: text('address'),
   subject: varchar('subject', { length: 255 }),
   message: text('message').notNull(),
   status: enquiryStatusEnum('status').notNull().default('new'),

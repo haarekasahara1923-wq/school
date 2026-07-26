@@ -4,6 +4,8 @@ import { contactEnquiries } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const session = await auth();
   if (!session || !['admin', 'operations'].includes((session.user as any).role)) {

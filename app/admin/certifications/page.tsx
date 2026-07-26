@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Award, Loader2, Upload, ExternalLink, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useToast } from '@/components/admin/ToastContext';
 
 type Certification = {
   id: string;
@@ -14,6 +15,7 @@ type Certification = {
 };
 
 export default function CertificationsPage() {
+  const { showToast, confirm } = useToast();
   const [certs, setCerts] = useState<Certification[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -33,13 +35,16 @@ export default function CertificationsPage() {
 
   const fetchCerts = async () => {
     try {
-      const res = await fetch('/api/certifications');
+      const res = await fetch('/api/certifications', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setCerts(data);
+      } else {
+        showToast('error', 'Failed to load certifications');
       }
     } catch (error) {
       console.error(error);
+      showToast('error', 'Network error loading certifications');
     } finally {
       setLoading(false);
     }
@@ -68,9 +73,10 @@ export default function CertificationsPage() {
         fileUrl: uploadData.secure_url,
         publicId: uploadData.public_id,
       }));
+      showToast('success', 'Document uploaded successfully');
     } catch (error) {
       console.error(error);
-      alert('File upload failed');
+      showToast('error', 'File upload failed');
     } finally {
       setUploading(false);
     }
@@ -78,7 +84,10 @@ export default function CertificationsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCert.title || !newCert.fileUrl) return;
+    if (!newCert.title || !newCert.fileUrl) {
+      showToast('warning', 'Title and Document are required');
+      return;
+    }
 
     try {
       const res = await fetch('/api/certifications', {
@@ -90,26 +99,38 @@ export default function CertificationsPage() {
       if (res.ok) {
         setNewCert({ title: '', description: '', issuedBy: '', issuedDate: '', fileUrl: '', publicId: '' });
         setIsCreating(false);
+        showToast('success', 'Certification created successfully');
         fetchCerts();
+      } else {
+        const data = await res.json();
+        showToast('error', data.error || 'Failed to save certification');
       }
     } catch (error) {
       console.error(error);
-      alert('Failed to save certification');
+      showToast('error', 'Failed to save certification');
     }
   };
 
-  const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete the certification "${title}"?`)) return;
-    try {
-      const res = await fetch(`/api/certifications/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setCerts(prev => prev.filter(c => c.id !== id));
-      } else {
-        alert('Failed to delete certification');
-      }
-    } catch {
-      alert('Network error. Please try again.');
-    }
+  const handleDelete = (id: string, title: string) => {
+    confirm({
+      title: 'Delete Certification?',
+      message: `Are you sure you want to delete "${title}"? This cannot be undone.`,
+      confirmText: 'Delete Certificate',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/certifications/${id}`, { method: 'DELETE' });
+          if (res.ok) {
+            setCerts(prev => prev.filter(c => c.id !== id));
+            showToast('success', `Deleted "${title}"`);
+          } else {
+            showToast('error', 'Failed to delete certification');
+          }
+        } catch {
+          showToast('error', 'Network error. Please try again.');
+        }
+      },
+    });
   };
 
   if (loading) {

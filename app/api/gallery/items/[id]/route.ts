@@ -6,6 +6,35 @@ import { auth } from '@/lib/auth';
 import { deleteFromCloudinary } from '@/lib/cloudinary';
 import { revalidatePath } from 'next/cache';
 
+export const dynamic = 'force-dynamic';
+
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+  const session = await auth();
+  if (!session || !['admin', 'operations'].includes((session.user as any).role)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const body = await req.json();
+    const { caption } = body;
+
+    const [updated] = await db
+      .update(galleryItems)
+      .set({ caption: caption ?? null, updatedAt: new Date() })
+      .where(eq(galleryItems.id, params.id))
+      .returning();
+
+    if (!updated) {
+      return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+    }
+
+    revalidatePath('/gallery');
+    return NextResponse.json(updated);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Failed to update caption' }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   const session = await auth();
   if (!session || !['admin', 'operations'].includes((session.user as any).role)) {
@@ -13,7 +42,6 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
   }
 
   try {
-    // Get item first to get publicId for Cloudinary deletion
     const item = await db.query.galleryItems.findFirst({
       where: eq(galleryItems.id, params.id),
     });
@@ -22,13 +50,10 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
 
-    // Delete from DB
     await db.delete(galleryItems).where(eq(galleryItems.id, params.id));
 
-    // Force Next.js to revalidate the public gallery page
     revalidatePath('/gallery');
 
-    // Try to delete from Cloudinary (non-blocking)
     try {
       const resourceType = item.type === 'video' ? 'video' : 'image';
       await deleteFromCloudinary(item.publicId, resourceType);

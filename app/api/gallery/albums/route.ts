@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { galleryAlbums } from '@/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { desc } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
@@ -12,7 +14,9 @@ export async function GET() {
         items: true,
       }
     });
-    return NextResponse.json(albums);
+    return NextResponse.json(albums, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+    });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch albums' }, { status: 500 });
   }

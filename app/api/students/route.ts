@@ -3,6 +3,26 @@ import { db } from '@/db';
 import { students } from '@/db/schema';
 import { studentSchema } from '@/lib/validations';
 import { auth } from '@/lib/auth';
+import { eq, desc } from 'drizzle-orm';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET() {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  try {
+    const list = await db.query.students.findMany({
+      where: eq(students.isDeleted, false),
+      orderBy: [desc(students.createdAt)],
+    });
+    return NextResponse.json(list, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: 'Failed to fetch students' }, { status: 500 });
+  }
+}
 
 export async function POST(req: Request) {
   const session = await auth();

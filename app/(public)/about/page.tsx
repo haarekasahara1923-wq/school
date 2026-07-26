@@ -6,7 +6,7 @@ import AboutPageClient from './AboutPageClient';
 
 export const metadata: Metadata = {
   title: 'About Us',
-  description: 'Learn about K.L. International School — our history, vision, mission, Director and Principal messages.',
+  description: 'Learn about Progressive Smart Kids School, Gwalior — our CBSE curriculum (Classes 1st to 12th), facilities, vision, mission, Director and Principal messages.',
 };
 
 export const dynamic = 'force-dynamic';

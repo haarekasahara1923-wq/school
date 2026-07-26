@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Loader2, Plus, UserCheck, Mail, Phone, Building, Calendar, DollarSign, Edit, Trash2, Upload, X, Save, UserCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { useToast } from '@/components/admin/ToastContext';
 
 type Staff = {
   id: string;
@@ -26,6 +27,7 @@ const defaultForm = {
 };
 
 export default function StaffPage() {
+  const { showToast, confirm } = useToast();
   const [staff, setStaff] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,9 +40,10 @@ export default function StaffPage() {
 
   const fetchStaff = async () => {
     try {
-      const res = await fetch('/api/staff');
+      const res = await fetch('/api/staff', { cache: 'no-store' });
       if (res.ok) setStaff(await res.json());
-    } catch (error) { console.error(error); }
+      else showToast('error', 'Failed to fetch staff members');
+    } catch (error) { console.error(error); showToast('error', 'Network error fetching staff'); }
     finally { setLoading(false); }
   };
 
@@ -88,15 +91,16 @@ export default function StaffPage() {
       if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
       setFormData(prev => ({ ...prev, photoUrl: data.secure_url, photoPublicId: data.public_id }));
+      showToast('success', 'Photo uploaded successfully');
     } catch {
-      alert('Photo upload failed. Please try again.');
+      showToast('error', 'Photo upload failed. Please try again.');
     } finally { setUploadingPhoto(false); }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.employeeId || !formData.name || !formData.designation || !formData.phone) {
-      alert('Please fill all required fields');
+      showToast('warning', 'Please fill all required fields');
       return;
     }
     setSaving(true);
@@ -109,26 +113,35 @@ export default function StaffPage() {
         body: JSON.stringify(formData),
       });
       if (res.ok) {
+        showToast('success', editingStaff ? `Updated ${formData.name}` : `Added ${formData.name}`);
         closeModal();
         fetchStaff();
       } else {
         const err = await res.json();
-        alert(err.error || 'Failed to save staff member');
+        showToast('error', err.error || 'Failed to save staff member');
       }
-    } catch { alert('Network error. Please try again.'); }
+    } catch { showToast('error', 'Network error. Please try again.'); }
     finally { setSaving(false); }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to remove ${name} from staff records?`)) return;
-    try {
-      const res = await fetch(`/api/staff/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setStaff(prev => prev.filter(s => s.id !== id));
-      } else {
-        alert('Failed to delete staff member');
-      }
-    } catch { alert('Network error. Please try again.'); }
+  const handleDelete = (id: string, name: string) => {
+    confirm({
+      title: 'Delete Staff Record?',
+      message: `Are you sure you want to remove ${name} from staff records?`,
+      confirmText: 'Delete Record',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/staff/${id}`, { method: 'DELETE' });
+          if (res.ok) {
+            setStaff(prev => prev.filter(s => s.id !== id));
+            showToast('success', `Deleted ${name}`);
+          } else {
+            showToast('error', 'Failed to delete staff member');
+          }
+        } catch { showToast('error', 'Network error. Please try again.'); }
+      },
+    });
   };
 
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-[#FF7A00]" /></div>;
@@ -213,7 +226,6 @@ export default function StaffPage() {
         )}
       </div>
 
-      {/* Add/Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -227,7 +239,6 @@ export default function StaffPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Photo Upload */}
               <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
                 <div className="w-20 h-20 rounded-full overflow-hidden bg-white border-2 border-orange-100 flex items-center justify-center shrink-0">
                   {formData.photoUrl ? (

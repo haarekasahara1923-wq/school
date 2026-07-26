@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Loader2, Upload, UserCircle, Save } from 'lucide-react';
+import { useToast } from '@/components/admin/ToastContext';
 
 type AboutContent = {
   id: string;
@@ -13,6 +14,7 @@ type AboutContent = {
 };
 
 export default function AboutContentPage() {
+  const { showToast } = useToast();
   const [content, setContent] = useState<Record<string, AboutContent>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -29,7 +31,7 @@ export default function AboutContentPage() {
 
   const fetchContent = async () => {
     try {
-      const res = await fetch('/api/about');
+      const res = await fetch('/api/about', { cache: 'no-store' });
       if (res.ok) {
         const data: AboutContent[] = await res.json();
         const contentMap: Record<string, AboutContent> = {};
@@ -42,9 +44,12 @@ export default function AboutContentPage() {
         
         setContent(contentMap);
         setEditData(editMap);
+      } else {
+        showToast('error', 'Failed to fetch about content');
       }
     } catch (error) {
       console.error(error);
+      showToast('error', 'Network error fetching about content');
     } finally {
       setLoading(false);
     }
@@ -76,9 +81,10 @@ export default function AboutContentPage() {
           photoPublicId: uploadData.public_id,
         }
       }));
+      showToast('success', 'Image uploaded successfully');
     } catch (error) {
       console.error(error);
-      alert('File upload failed');
+      showToast('error', 'File upload failed');
     } finally {
       setUploadingSection(null);
     }
@@ -87,7 +93,7 @@ export default function AboutContentPage() {
   const handleSave = async (section: string) => {
     const dataToSave = editData[section];
     if (!dataToSave.name || !dataToSave.message) {
-      alert('Name and Message are required');
+      showToast('warning', 'Name and Message fields are required');
       return;
     }
 
@@ -100,7 +106,7 @@ export default function AboutContentPage() {
       });
 
       if (res.ok) {
-        alert(`${section} content saved successfully!`);
+        showToast('success', `${section.charAt(0).toUpperCase() + section.slice(1)}'s content saved successfully!`);
         fetchContent();
       } else {
         const err = await res.json();
@@ -108,7 +114,7 @@ export default function AboutContentPage() {
       }
     } catch (error: any) {
       console.error(error);
-      alert(`Error: ${error.message}`);
+      showToast('error', error.message || 'Failed to save content');
     } finally {
       setSaving(false);
     }

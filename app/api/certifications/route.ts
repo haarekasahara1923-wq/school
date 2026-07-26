@@ -1,15 +1,19 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { certifications } from '@/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { desc } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
     const certs = await db.query.certifications.findMany({
       orderBy: [desc(certifications.issuedDate)],
     });
-    return NextResponse.json(certs);
+    return NextResponse.json(certs, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+    });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch certifications' }, { status: 500 });
   }

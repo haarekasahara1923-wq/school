@@ -9,12 +9,8 @@ import { cn } from '@/lib/utils';
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About Us' },
-  { href: '/academics', label: 'Academics' },
-  { href: '/admissions', label: 'Admissions' },
   { href: '/gallery', label: 'Gallery' },
-  { href: '/staff', label: 'Staff' },
-  { href: '/certifications', label: 'Certifications' },
-  { href: '/contact', label: 'Contact' },
+  { href: '/contact', label: 'Contact Us' },
 ];
 
 export default function Navbar() {
@@ -47,8 +43,8 @@ export default function Navbar() {
               <GraduationCap className="w-6 h-6 text-white" />
             </div>
             <div className="hidden sm:block">
-              <p className="font-playfair font-bold text-white text-sm leading-tight">K.L. International</p>
-              <p className="text-orange-300 text-xs">School, Gwalior</p>
+              <p className="font-playfair font-bold text-white text-sm leading-tight">Progressive Smart Kids</p>
+              <p className="text-orange-300 text-xs">School, Gwalior (MP)</p>
             </div>
           </Link>
 
@@ -59,7 +55,7 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  'px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                  'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
                   pathname === link.href
                     ? 'text-[#FF7A00] bg-orange-500/10'
                     : 'text-white/80 hover:text-white hover:bg-white/10'
@@ -80,10 +76,10 @@ export default function Navbar() {
               8962678915
             </a>
             <Link
-              href="/admissions"
+              href="/contact"
               className="hidden lg:block btn-primary text-sm px-5 py-2"
             >
-              Apply Now
+              Enquire Now
             </Link>
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -131,8 +127,8 @@ export default function Navbar() {
                 <a href="tel:8962678915" className="flex items-center gap-2 px-4 py-3 text-white/70 text-sm">
                   <Phone className="w-4 h-4 text-[#FF7A00]" /> 8962678915
                 </a>
-                <Link href="/admissions" className="btn-primary text-center text-sm">
-                  Apply Now
+                <Link href="/contact" className="btn-primary text-center text-sm">
+                  Enquire Now
                 </Link>
               </div>
             </div>

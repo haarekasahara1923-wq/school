@@ -4,6 +4,8 @@ import { students } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -49,4 +51,3 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     return NextResponse.json({ error: error.message || 'Failed to delete student' }, { status: 400 });
   }
 }
-

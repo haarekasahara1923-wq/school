@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Loader2, Plus, Package, AlertCircle, CheckCircle, Search, Edit2, Trash2, X, Save } from 'lucide-react';
-import { format } from 'date-fns';
+import { useToast } from '@/components/admin/ToastContext';
 
 type InventoryItem = {
   id: string;
@@ -33,6 +33,7 @@ const defaultItem = {
 };
 
 export default function InventoryPage() {
+  const { showToast, confirm } = useToast();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -48,13 +49,16 @@ export default function InventoryPage() {
 
   const fetchInventory = async () => {
     try {
-      const res = await fetch('/api/inventory');
+      const res = await fetch('/api/inventory', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setItems(data);
+      } else {
+        showToast('error', 'Failed to fetch inventory items');
       }
     } catch (error) {
       console.error(error);
+      showToast('error', 'Network error loading inventory');
     } finally {
       setLoading(false);
     }
@@ -92,7 +96,6 @@ export default function InventoryPage() {
     
     setSaving(true);
     
-    // Auto calculate status based on quantity and minQuantity
     let status = 'in_stock';
     if (formData.quantity === 0) status = 'out_of_stock';
     else if (formData.quantity <= formData.minQuantity) status = 'low_stock';
@@ -106,10 +109,12 @@ export default function InventoryPage() {
         });
 
         if (res.ok) {
+          showToast('success', `Updated inventory item ${formData.itemName}`);
           closeModal();
           fetchInventory();
         } else {
-          alert('Failed to update item');
+          const err = await res.json();
+          showToast('error', err.error || 'Failed to update item');
         }
       } else {
         const res = await fetch('/api/inventory', {
@@ -119,32 +124,42 @@ export default function InventoryPage() {
         });
 
         if (res.ok) {
+          showToast('success', `Added new item ${formData.itemName}`);
           closeModal();
           fetchInventory();
         } else {
-          alert('Failed to add item');
+          const err = await res.json();
+          showToast('error', err.error || 'Failed to add item');
         }
       }
     } catch (error) {
       console.error(error);
-      alert('Network error');
+      showToast('error', 'Network error while saving item');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete ${name} from inventory?`)) return;
-    try {
-      const res = await fetch(`/api/inventory/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setItems(prev => prev.filter(i => i.id !== id));
-      } else {
-        alert('Failed to delete item');
-      }
-    } catch {
-      alert('Network error');
-    }
+  const handleDelete = (id: string, name: string) => {
+    confirm({
+      title: 'Delete Inventory Item?',
+      message: `Are you sure you want to remove "${name}" from inventory?`,
+      confirmText: 'Delete Item',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/inventory/${id}`, { method: 'DELETE' });
+          if (res.ok) {
+            setItems(prev => prev.filter(i => i.id !== id));
+            showToast('success', `Deleted "${name}"`);
+          } else {
+            showToast('error', 'Failed to delete item');
+          }
+        } catch {
+          showToast('error', 'Network error');
+        }
+      },
+    });
   };
 
   const filteredItems = items.filter(item => 

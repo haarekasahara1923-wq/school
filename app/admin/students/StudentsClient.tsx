@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
-import { Plus, Search, Trash2, Edit, UserPlus, Phone, X, Save, Loader2 } from 'lucide-react';
+import { Plus, Search, Trash2, Edit, UserPlus, Phone, X, Save, Loader2, Filter } from 'lucide-react';
 import { CLASS_OPTIONS, formatDate } from '@/lib/utils';
+import { useToast } from '@/components/admin/ToastContext';
 
 const defaultForm = {
   admissionNo: '',
@@ -19,6 +20,7 @@ const defaultForm = {
 };
 
 export default function StudentsClient({ students: initialStudents }: { students: any[] }) {
+  const { showToast, confirm } = useToast();
   const [studentsList, setStudentsList] = useState(initialStudents);
   const [search, setSearch] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
@@ -69,55 +71,64 @@ export default function StudentsClient({ students: initialStudents }: { students
     setSaving(true);
     try {
       if (editingStudent) {
-        // EDIT existing student
+        // EDIT student
         const res = await fetch(`/api/students/${editingStudent.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData),
         });
+        const data = await res.json();
         if (res.ok) {
-          const updated = await res.json();
-          setStudentsList(prev => prev.map(s => s.id === editingStudent.id ? { ...s, ...updated } : s));
+          setStudentsList(prev => prev.map(s => s.id === editingStudent.id ? { ...s, ...data } : s));
+          showToast('success', `Updated student record for ${formData.name}`);
           closeModal();
         } else {
-          const err = await res.json();
-          alert(err.error || 'Failed to update student');
+          showToast('error', data.error || 'Failed to update student');
         }
       } else {
-        // CREATE new student
+        // CREATE student
         const res = await fetch('/api/students', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData),
         });
+        const data = await res.json();
         if (res.ok) {
-          const newStudent = await res.json();
-          setStudentsList(prev => [newStudent, ...prev]);
+          setStudentsList(prev => [data, ...prev]);
+          showToast('success', `Added new student ${formData.name}`);
           closeModal();
         } else {
-          const err = await res.json();
-          alert(err.error || 'Failed to add student');
+          showToast('error', data.error || 'Failed to add student');
         }
       }
     } catch {
-      alert('Network error. Please try again.');
+      showToast('error', 'Network error. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete ${name}'s record?`)) return;
-    try {
-      const res = await fetch(`/api/students/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setStudentsList(prev => prev.filter(s => s.id !== id));
-      } else {
-        alert('Failed to delete student');
-      }
-    } catch {
-      alert('Network error. Please try again.');
-    }
+  const handleDelete = (id: string, name: string) => {
+    confirm({
+      title: 'Delete Student Record?',
+      message: `Are you sure you want to delete ${name}'s record? This action cannot be undone.`,
+      confirmText: 'Delete Record',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/students/${id}`, { method: 'DELETE' });
+          if (res.ok) {
+            setStudentsList(prev => prev.filter(s => s.id !== id));
+            showToast('success', `Deleted ${name}'s record`);
+          } else {
+            const data = await res.json();
+            showToast('error', data.error || 'Failed to delete student');
+          }
+        } catch {
+          showToast('error', 'Network error. Please try again.');
+        }
+      },
+    });
   };
 
   const field = (label: string, key: keyof typeof formData, type = 'text', required = false) => (
@@ -170,7 +181,7 @@ export default function StudentsClient({ students: initialStudents }: { students
         </select>
       </div>
 
-      {/* Stats */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {CLASS_OPTIONS.slice(0, 4).map(cls => {
           const count = studentsList.filter(s => s.class === cls).length;
@@ -183,7 +194,7 @@ export default function StudentsClient({ students: initialStudents }: { students
         })}
       </div>
 
-      {/* Table */}
+      {/* Student Table */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-gray-600">

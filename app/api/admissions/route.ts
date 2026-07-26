@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { admissionEnquiries } from '@/db/schema';
 import { admissionEnquirySchema } from '@/lib/validations';
-import { desc, eq } from 'drizzle-orm';
+import { desc } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const session = await auth();
@@ -15,7 +17,9 @@ export async function GET() {
     const enquiries = await db.query.admissionEnquiries.findMany({
       orderBy: [desc(admissionEnquiries.createdAt)],
     });
-    return NextResponse.json(enquiries);
+    return NextResponse.json(enquiries, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+    });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch admissions' }, { status: 500 });
   }

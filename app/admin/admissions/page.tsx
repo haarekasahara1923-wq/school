@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Loader2, FileText, User, Phone, Mail, MapPin, Calendar, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, FileText, User, Phone, Mail, MapPin, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
+import { useToast } from '@/components/admin/ToastContext';
 
 type AdmissionEnquiry = {
   id: string;
@@ -31,6 +32,7 @@ const statusLabels = {
 };
 
 export default function AdmissionsPage() {
+  const { showToast } = useToast();
   const [enquiries, setEnquiries] = useState<AdmissionEnquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
@@ -41,13 +43,16 @@ export default function AdmissionsPage() {
 
   const fetchEnquiries = async () => {
     try {
-      const res = await fetch('/api/admissions');
+      const res = await fetch('/api/admissions', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setEnquiries(data);
+      } else {
+        showToast('error', 'Failed to fetch admission enquiries');
       }
     } catch (error) {
       console.error(error);
+      showToast('error', 'Network error fetching admissions');
     } finally {
       setLoading(false);
     }
@@ -62,11 +67,15 @@ export default function AdmissionsPage() {
         body: JSON.stringify({ status }),
       });
       if (res.ok) {
+        showToast('success', `Updated enquiry status to ${statusLabels[status as keyof typeof statusLabels] || status}`);
         fetchEnquiries();
+      } else {
+        const data = await res.json();
+        showToast('error', data.error || 'Failed to update status');
       }
     } catch (error) {
       console.error(error);
-      alert('Failed to update status');
+      showToast('error', 'Failed to update status');
     } finally {
       setUpdating(null);
     }

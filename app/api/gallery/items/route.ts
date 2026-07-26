@@ -5,10 +5,11 @@ import { eq, desc } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
+export const dynamic = 'force-dynamic';
+
 const DEFAULT_ALBUM_TITLE = '__default__';
 
 async function getOrCreateDefaultAlbum() {
-  // Try to find existing default album
   const existing = await db
     .select()
     .from(galleryAlbums)
@@ -17,7 +18,6 @@ async function getOrCreateDefaultAlbum() {
 
   if (existing.length > 0) return existing[0];
 
-  // Create it
   const [created] = await db
     .insert(galleryAlbums)
     .values({
@@ -29,21 +29,21 @@ async function getOrCreateDefaultAlbum() {
   return created;
 }
 
-// GET all gallery items (public - no auth needed)
 export async function GET() {
   try {
     const items = await db
       .select()
       .from(galleryItems)
       .orderBy(desc(galleryItems.createdAt));
-    return NextResponse.json({ items });
+    return NextResponse.json({ items }, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+    });
   } catch (error: any) {
     console.error('[Gallery Items GET]', error);
     return NextResponse.json({ items: [], error: error.message }, { status: 500 });
   }
 }
 
-// POST - upload a new gallery item (admin only)
 export async function POST(req: Request) {
   const session = await auth();
   if (!session || !['admin', 'operations'].includes((session.user as any).role)) {
@@ -58,7 +58,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields: url and publicId' }, { status: 400 });
     }
 
-    // Auto-get or create the default album
     const album = await getOrCreateDefaultAlbum();
 
     const [newItem] = await db

@@ -5,6 +5,8 @@ import { eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { deleteFromCloudinary } from '@/lib/cloudinary';
 
+export const dynamic = 'force-dynamic';
+
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const session = await auth();
   if (!session || !['admin', 'operations'].includes((session.user as any).role)) {
@@ -46,7 +48,6 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
 
     await db.delete(certifications).where(eq(certifications.id, params.id));
 
-    // Delete from Cloudinary (non-blocking)
     try {
       await deleteFromCloudinary(cert.publicId, 'raw');
     } catch (e) {

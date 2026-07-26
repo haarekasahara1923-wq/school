@@ -4,6 +4,8 @@ import { staff } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const session = await auth();
   if (!session || !['admin', 'accountant', 'operations'].includes((session.user as any).role)) {
@@ -15,7 +17,9 @@ export async function GET() {
       where: eq(staff.isDeleted, false),
       orderBy: [desc(staff.createdAt)],
     });
-    return NextResponse.json(staffMembers);
+    return NextResponse.json(staffMembers, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+    });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch staff' }, { status: 500 });
   }

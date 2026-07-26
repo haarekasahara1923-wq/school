@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { users } from '@/db/schema';
-import { eq, desc, ne } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const session = await auth();
@@ -15,10 +17,12 @@ export async function GET() {
     const allUsers = await db.query.users.findMany({
       orderBy: [desc(users.createdAt)],
       columns: {
-        passwordHash: false, // Never expose password hashes
+        passwordHash: false,
       },
     });
-    return NextResponse.json(allUsers);
+    return NextResponse.json(allUsers, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+    });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
   }

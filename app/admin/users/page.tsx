@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Loader2, Plus, Shield, User, Mail, ShieldAlert, Key, CheckCircle, XCircle, Trash2, Edit } from 'lucide-react';
+import { Loader2, Plus, Shield, User, Mail, ShieldAlert, Key, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useToast } from '@/components/admin/ToastContext';
 
 type UserData = {
   id: string;
@@ -22,6 +23,7 @@ const defaultForm = {
 };
 
 export default function UsersPage() {
+  const { showToast, confirm } = useToast();
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,13 +37,16 @@ export default function UsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch('/api/users');
+      const res = await fetch('/api/users', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setUsers(data);
+      } else {
+        showToast('error', 'Failed to fetch user list');
       }
     } catch (error) {
       console.error(error);
+      showToast('error', 'Network error fetching users');
     } finally {
       setLoading(false);
     }
@@ -68,16 +73,17 @@ export default function UsersPage() {
         body: JSON.stringify(formData),
       });
 
+      const data = await res.json();
       if (res.ok) {
+        showToast('success', `Created user account for ${formData.name}`);
         closeModal();
         fetchUsers();
       } else {
-        const err = await res.json();
-        alert(err.error || 'Failed to add user');
+        showToast('error', data.error || 'Failed to add user');
       }
     } catch (error) {
       console.error(error);
-      alert('Network error');
+      showToast('error', 'Network error creating user');
     } finally {
       setSaving(false);
     }
@@ -90,30 +96,39 @@ export default function UsersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: !user.isActive }),
       });
+      const data = await res.json();
       if (res.ok) {
-        setUsers(prev => prev.map(u => u.id === user.id ? { ...u, isActive: !u.isActive } : u));
+        setUsers(prev => prev.map(u => u.id === user.id ? { ...u, isActive: !user.isActive } : u));
+        showToast('info', `User ${user.name} is now ${!user.isActive ? 'Active' : 'Inactive'}`);
       } else {
-        const err = await res.json();
-        alert(err.error || 'Failed to update user status');
+        showToast('error', data.error || 'Failed to update user status');
       }
     } catch {
-      alert('Network error');
+      showToast('error', 'Network error updating user status');
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to deactivate ${name}?`)) return;
-    try {
-      const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setUsers(prev => prev.map(u => u.id === id ? { ...u, isActive: false } : u));
-      } else {
-        const err = await res.json();
-        alert(err.error || 'Failed to delete user');
-      }
-    } catch {
-      alert('Network error');
-    }
+  const handleDelete = (id: string, name: string) => {
+    confirm({
+      title: 'Deactivate User Account?',
+      message: `Are you sure you want to deactivate ${name}'s access to the admin portal?`,
+      confirmText: 'Deactivate',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (res.ok) {
+            setUsers(prev => prev.map(u => u.id === id ? { ...u, isActive: false } : u));
+            showToast('success', `Deactivated ${name}`);
+          } else {
+            showToast('error', data.error || 'Failed to delete user');
+          }
+        } catch {
+          showToast('error', 'Network error deactivating user');
+        }
+      },
+    });
   };
 
   if (loading) {
